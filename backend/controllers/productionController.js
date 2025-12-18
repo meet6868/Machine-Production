@@ -970,3 +970,85 @@ export const getSummaries = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
+
+// @desc    Get yesterday's summary grouped by machine
+// @route   GET /api/production/summary/yesterday-by-machine
+// @access  Private
+export const getYesterdaySummaryByMachine = async (req, res) => {
+  try {
+    // Calculate yesterday's date
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(0, 0, 0, 0);
+
+    // Get all machines for this company
+    const machines = await Machine.find({ company: req.companyId });
+
+    // Get yesterday's production data for each machine
+    const machinesSummary = await Promise.all(
+      machines.map(async (machine) => {
+        // Get all productions for this machine yesterday
+        const productions = await Production.find({
+          company: req.companyId,
+          machine: machine._id,
+          productionDate: yesterday
+        }).populate('worker', 'name');
+
+        // Get daily production data
+        const dailyProduction = await DailyProduction.findOne({
+          company: req.companyId,
+          machine: machine._id,
+          productionDate: yesterday
+        });
+
+        // Calculate summary stats
+        const totalMeter = productions.reduce((sum, p) => sum + (p.meter || 0), 0);
+        const totalPick = productions.reduce((sum, p) => sum + (p.totalPick || 0), 0);
+        const totalRuntime = productions.reduce((sum, p) => sum + (p.runtime || 0), 0);
+        const avgEfficiency = productions.length > 0
+          ? productions.reduce((sum, p) => sum + (p.efficiency || 0), 0) / productions.length
+          : 0;
+
+        return {
+          machine: {
+            _id: machine._id,
+            machineNumber: machine.machineNumber,
+            type: machine.type,
+            description: machine.description
+          },
+          summary: {
+            date: yesterday,
+            totalProductions: productions.length,
+            totalMeter: Math.round(totalMeter),
+            totalPick: Math.round(totalPick),
+            totalRuntime: Math.round(totalRuntime),
+            avgEfficiency: Math.round(avgEfficiency * 10) / 10,
+            speed: dailyProduction?.speed || 0,
+            cfm: dailyProduction?.cfm || 0,
+            pik: dailyProduction?.pik || 0,
+            previousReading: dailyProduction?.previousReading,
+            currentReading: dailyProduction?.currentReading,
+            unitsConsumed: dailyProduction?.currentReading && dailyProduction?.previousReading
+              ? dailyProduction.currentReading - dailyProduction.previousReading
+              : null
+          },
+          productions: productions.map(p => ({
+            shift: p.shift,
+            worker: p.worker?.name,
+            meter: p.meter,
+            runtime: p.runtime,
+            efficiency: p.efficiency
+          }))
+        };
+      })
+    );
+
+    res.json({
+      success: true,
+      data: machinesSummary
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};

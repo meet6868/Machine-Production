@@ -12,7 +12,8 @@ import {
   getSummaries,
   getWorkerAnalytics,
   getMachineAnalytics,
-  getElectricityAnalytics
+  getElectricityAnalytics,
+  getYesterdaySummaryByMachine
 } from '../controllers/productionController.js';
 import { protect, checkCompanyAccess } from '../middleware/authMiddleware.js';
 
@@ -47,6 +48,7 @@ router.get('/', getProductions);
 router.get('/stats', getProductionStats);
 router.get('/summaries', getSummaries);
 router.get('/summary/daily', getDailySummary);
+router.get('/summary/yesterday-by-machine', getYesterdaySummaryByMachine);
 router.get('/summary/:date', getDateSummary);
 router.get('/analytics/electricity', getElectricityAnalytics);
 router.get('/analytics/worker/:workerId', getWorkerAnalytics);

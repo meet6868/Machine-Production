@@ -132,6 +132,7 @@ export const productionAPI = {
   getDailySummary: (date) => api.get('/production/summary/daily', { params: { date } }),
   getDateSummary: (date) => api.get(`/production/summary/${date}`),
   getSummaries: (params) => api.get('/production/summaries', { params }),
+  getYesterdaySummaryByMachine: () => api.get('/production/summary/yesterday-by-machine'),
   getWorkerAnalytics: (workerId, params) => api.get(`/production/analytics/worker/${workerId}`, { params }),
   getMachineAnalytics: (machineId, params) => api.get(`/production/analytics/machine/${machineId}`, { params }),
   getElectricityAnalytics: (params) => api.get('/production/analytics/electricity', { params }),

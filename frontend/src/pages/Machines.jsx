@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { machineAPI } from '../utils/api';
+import { machineAPI, productionAPI } from '../utils/api';
 import { toast } from 'react-toastify';
-import { FiPlus, FiEdit, FiTrash2, FiX } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiX, FiActivity, FiClock, FiTrendingUp, FiZap } from 'react-icons/fi';
 
 export default function Machines() {
   const [machines, setMachines] = useState([]);
+  const [yesterdaySummaries, setYesterdaySummaries] = useState({});
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingMachine, setEditingMachine] = useState(null);
@@ -16,6 +17,7 @@ export default function Machines() {
 
   useEffect(() => {
     fetchMachines();
+    fetchYesterdaySummaries();
   }, []);
 
   const fetchMachines = async () => {
@@ -26,6 +28,20 @@ export default function Machines() {
       toast.error('Failed to load machines');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchYesterdaySummaries = async () => {
+    try {
+      const response = await productionAPI.getYesterdaySummaryByMachine();
+      // Convert array to object with machine ID as key
+      const summariesMap = {};
+      response.data.data.forEach(item => {
+        summariesMap[item.machine._id] = item.summary;
+      });
+      setYesterdaySummaries(summariesMap);
+    } catch (error) {
+      console.error('Failed to load yesterday summaries:', error);
     }
   };
 
@@ -111,46 +127,149 @@ export default function Machines() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {machines.map((machine) => (
-            <div key={machine._id} className="card hover:shadow-lg transition-shadow">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-xl font-semibold text-secondary-900">
-                    Machine {machine.machineNumber}
-                  </h3>
-                  <span
-                    className={`badge mt-2 ${
-                      machine.type === 'single' ? 'badge-primary' : 'badge-success'
-                    }`}
-                  >
-                    {machine.type.toUpperCase()}
-                  </span>
+          {machines.map((machine) => {
+            const yesterdaySummary = yesterdaySummaries[machine._id];
+            
+            return (
+              <div key={machine._id} className="card hover:shadow-lg transition-shadow">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-xl font-semibold text-secondary-900">
+                      Machine {machine.machineNumber}
+                    </h3>
+                    <span
+                      className={`badge mt-2 ${
+                        machine.type === 'single' ? 'badge-primary' : 'badge-success'
+                      }`}
+                    >
+                      {machine.type.toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => openModal(machine)}
+                      className="text-primary-600 hover:text-primary-800"
+                    >
+                      <FiEdit className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(machine._id)}
+                      className="text-danger-600 hover:text-danger-800"
+                    >
+                      <FiTrash2 className="h-5 w-5" />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => openModal(machine)}
-                    className="text-primary-600 hover:text-primary-800"
-                  >
-                    <FiEdit className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(machine._id)}
-                    className="text-danger-600 hover:text-danger-800"
-                  >
-                    <FiTrash2 className="h-5 w-5" />
-                  </button>
-                </div>
-              </div>
 
-              <div className="space-y-2 text-sm text-secondary-700">
                 {machine.description && (
-                  <div className="pt-2">
-                    <p className="text-secondary-600">{machine.description}</p>
+                  <div className="mb-4 pb-4 border-b border-secondary-200">
+                    <p className="text-sm text-secondary-600">{machine.description}</p>
+                  </div>
+                )}
+
+                {/* Yesterday's Summary */}
+                {yesterdaySummary && yesterdaySummary.totalProductions > 0 ? (
+                  <div className="bg-secondary-50 rounded-lg p-4 space-y-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-semibold text-secondary-700 flex items-center gap-2">
+                        <FiActivity className="h-4 w-4" />
+                        Yesterday's Summary
+                      </h4>
+                      <span className="text-xs text-secondary-500">
+                        {new Date(yesterdaySummary.date).toLocaleDateString()}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Total Meter */}
+                      <div className="bg-white rounded p-2">
+                        <div className="flex items-center gap-1 text-xs text-secondary-600 mb-1">
+                          <FiTrendingUp className="h-3 w-3" />
+                          <span>Total Meter</span>
+                        </div>
+                        <div className="text-lg font-bold text-primary-600">
+                          {yesterdaySummary.totalMeter.toLocaleString()}
+                        </div>
+                      </div>
+
+                      {/* Total Runtime */}
+                      <div className="bg-white rounded p-2">
+                        <div className="flex items-center gap-1 text-xs text-secondary-600 mb-1">
+                          <FiClock className="h-3 w-3" />
+                          <span>Runtime</span>
+                        </div>
+                        <div className="text-lg font-bold text-secondary-900">
+                          {yesterdaySummary.totalRuntime} min
+                        </div>
+                      </div>
+
+                      {/* Average Efficiency */}
+                      <div className="bg-white rounded p-2">
+                        <div className="text-xs text-secondary-600 mb-1">Avg Efficiency</div>
+                        <div className="text-lg font-bold text-success-600">
+                          {yesterdaySummary.avgEfficiency}%
+                        </div>
+                      </div>
+
+                      {/* Total Productions */}
+                      <div className="bg-white rounded p-2">
+                        <div className="text-xs text-secondary-600 mb-1">Productions</div>
+                        <div className="text-lg font-bold text-secondary-900">
+                          {yesterdaySummary.totalProductions}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Machine Settings */}
+                    {(yesterdaySummary.speed > 0 || yesterdaySummary.cfm > 0 || yesterdaySummary.pik > 0) && (
+                      <div className="pt-2 border-t border-secondary-200">
+                        <div className="grid grid-cols-3 gap-2 text-xs">
+                          {yesterdaySummary.speed > 0 && (
+                            <div>
+                              <span className="text-secondary-600">Speed:</span>
+                              <span className="ml-1 font-semibold">{yesterdaySummary.speed}</span>
+                            </div>
+                          )}
+                          {yesterdaySummary.cfm > 0 && (
+                            <div>
+                              <span className="text-secondary-600">CFM:</span>
+                              <span className="ml-1 font-semibold">{yesterdaySummary.cfm}</span>
+                            </div>
+                          )}
+                          {yesterdaySummary.pik > 0 && (
+                            <div>
+                              <span className="text-secondary-600">PIK:</span>
+                              <span className="ml-1 font-semibold">{yesterdaySummary.pik}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Electricity Consumption */}
+                    {yesterdaySummary.unitsConsumed !== null && (
+                      <div className="pt-2 border-t border-secondary-200">
+                        <div className="flex items-center gap-2 text-xs">
+                          <FiZap className="h-4 w-4 text-warning-500" />
+                          <span className="text-secondary-600">Electricity:</span>
+                          <span className="font-semibold text-warning-600">
+                            {yesterdaySummary.unitsConsumed.toFixed(1)} units
+                          </span>
+                          <span className="text-secondary-500">
+                            ({yesterdaySummary.previousReading} → {yesterdaySummary.currentReading})
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-secondary-50 rounded-lg p-4 text-center">
+                    <p className="text-sm text-secondary-500">No production data for yesterday</p>
                   </div>
                 )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
