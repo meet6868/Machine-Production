@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { machineAPI, productionAPI } from '../utils/api';
 import { toast } from 'react-toastify';
 import { FiPlus, FiEdit, FiTrash2, FiX, FiActivity, FiClock, FiTrendingUp, FiZap } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 
 export default function Machines() {
+  const { t } = useTranslation();
   const [machines, setMachines] = useState([]);
   const [yesterdaySummaries, setYesterdaySummaries] = useState({});
   const [loading, setLoading] = useState(true);
@@ -102,6 +104,7 @@ export default function Machines() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <p className="ml-3 text-secondary-600">{t('common.loading')}</p>
       </div>
     );
   }
@@ -110,19 +113,19 @@ export default function Machines() {
     <div>
       <div className="mb-8 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-secondary-900">Machines</h1>
-          <p className="text-secondary-600 mt-2">Manage your production machines</p>
+          <h1 className="text-3xl font-bold text-secondary-900">{t('machines.title')}</h1>
+          <p className="text-secondary-600 mt-2">{t('machines.subtitle')}</p>
         </div>
         <button onClick={() => openModal()} className="btn-primary flex items-center gap-2">
-          <FiPlus /> Add Machine
+          <FiPlus /> {t('machines.addMachine')}
         </button>
       </div>
 
       {machines.length === 0 ? (
         <div className="card text-center py-12">
-          <p className="text-secondary-600 mb-4">No machines added yet</p>
+          <p className="text-secondary-600 mb-4">{t('machines.noMachines')}</p>
           <button onClick={() => openModal()} className="btn-primary">
-            Add Your First Machine
+            {t('machines.addFirstMachine')}
           </button>
         </div>
       ) : (
@@ -142,7 +145,7 @@ export default function Machines() {
                         machine.type === 'single' ? 'badge-primary' : 'badge-success'
                       }`}
                     >
-                      {machine.type.toUpperCase()}
+                      {t(`machines.${machine.type}`).toUpperCase()}
                     </span>
                   </div>
                   <div className="flex gap-2">
@@ -173,7 +176,7 @@ export default function Machines() {
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="text-sm font-semibold text-secondary-700 flex items-center gap-2">
                         <FiActivity className="h-4 w-4" />
-                        Yesterday's Summary
+                        {t('machines.yesterdaySummary')}
                       </h4>
                       <span className="text-xs text-secondary-500">
                         {new Date(yesterdaySummary.date).toLocaleDateString()}
@@ -185,7 +188,7 @@ export default function Machines() {
                       <div className="bg-white rounded p-2">
                         <div className="flex items-center gap-1 text-xs text-secondary-600 mb-1">
                           <FiTrendingUp className="h-3 w-3" />
-                          <span>Total Meter</span>
+                          <span>{t('machines.totalMeter')}</span>
                         </div>
                         <div className="text-lg font-bold text-primary-600">
                           {yesterdaySummary.totalMeter.toLocaleString()}
@@ -196,7 +199,7 @@ export default function Machines() {
                       <div className="bg-white rounded p-2">
                         <div className="flex items-center gap-1 text-xs text-secondary-600 mb-1">
                           <FiClock className="h-3 w-3" />
-                          <span>Runtime</span>
+                          <span>{t('machines.runtime')}</span>
                         </div>
                         <div className="text-lg font-bold text-secondary-900">
                           {yesterdaySummary.totalRuntime} min
@@ -205,7 +208,7 @@ export default function Machines() {
 
                       {/* Average Efficiency */}
                       <div className="bg-white rounded p-2">
-                        <div className="text-xs text-secondary-600 mb-1">Avg Efficiency</div>
+                        <div className="text-xs text-secondary-600 mb-1">{t('machines.avgEfficiency')}</div>
                         <div className="text-lg font-bold text-success-600">
                           {yesterdaySummary.avgEfficiency}%
                         </div>
@@ -213,7 +216,7 @@ export default function Machines() {
 
                       {/* Total Productions */}
                       <div className="bg-white rounded p-2">
-                        <div className="text-xs text-secondary-600 mb-1">Productions</div>
+                        <div className="text-xs text-secondary-600 mb-1">{t('machines.productions')}</div>
                         <div className="text-lg font-bold text-secondary-900">
                           {yesterdaySummary.totalProductions}
                         </div>
@@ -226,19 +229,19 @@ export default function Machines() {
                         <div className="grid grid-cols-3 gap-2 text-xs">
                           {yesterdaySummary.speed > 0 && (
                             <div>
-                              <span className="text-secondary-600">Speed:</span>
+                              <span className="text-secondary-600">{t('machines.speed')}:</span>
                               <span className="ml-1 font-semibold">{yesterdaySummary.speed}</span>
                             </div>
                           )}
                           {yesterdaySummary.cfm > 0 && (
                             <div>
-                              <span className="text-secondary-600">CFM:</span>
+                              <span className="text-secondary-600">{t('machines.cfm')}:</span>
                               <span className="ml-1 font-semibold">{yesterdaySummary.cfm}</span>
                             </div>
                           )}
                           {yesterdaySummary.pik > 0 && (
                             <div>
-                              <span className="text-secondary-600">PIK:</span>
+                              <span className="text-secondary-600">{t('machines.pik')}:</span>
                               <span className="ml-1 font-semibold">{yesterdaySummary.pik}</span>
                             </div>
                           )}
@@ -251,9 +254,9 @@ export default function Machines() {
                       <div className="pt-2 border-t border-secondary-200">
                         <div className="flex items-center gap-2 text-xs">
                           <FiZap className="h-4 w-4 text-warning-500" />
-                          <span className="text-secondary-600">Electricity:</span>
+                          <span className="text-secondary-600">{t('machines.electricity')}:</span>
                           <span className="font-semibold text-warning-600">
-                            {yesterdaySummary.unitsConsumed.toFixed(1)} units
+                            {yesterdaySummary.unitsConsumed.toFixed(1)} {t('machines.unitsConsumed')}
                           </span>
                           <span className="text-secondary-500">
                             ({yesterdaySummary.previousReading} → {yesterdaySummary.currentReading})
@@ -264,7 +267,7 @@ export default function Machines() {
                   </div>
                 ) : (
                   <div className="bg-secondary-50 rounded-lg p-4 text-center">
-                    <p className="text-sm text-secondary-500">No production data for yesterday</p>
+                    <p className="text-sm text-secondary-500">{t('machines.noProductionYesterday')}</p>
                   </div>
                 )}
               </div>
@@ -293,14 +296,14 @@ export default function Machines() {
 
               <div className="mb-4">
                 <h3 className="text-lg font-semibold text-secondary-900">
-                  {editingMachine ? 'Edit Machine' : 'Add New Machine'}
+                  {editingMachine ? t('machines.editMachine') : t('machines.addMachine')}
                 </h3>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label htmlFor="machineNumber" className="label">
-                    Machine Number *
+                    {t('machines.machineNumber')} *
                   </label>
                   <input
                     type="text"
@@ -316,7 +319,7 @@ export default function Machines() {
 
                 <div>
                   <label htmlFor="type" className="label">
-                    Type *
+                    {t('machines.type')} *
                   </label>
                   <select
                     id="type"
@@ -325,23 +328,23 @@ export default function Machines() {
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                   >
-                    <option value="single">Single</option>
-                    <option value="double">Double</option>
+                    <option value="single">{t('machines.single')}</option>
+                    <option value="double">{t('machines.double')}</option>
                   </select>
                   <p className="mt-1 text-sm text-secondary-500">
-                    Single: Standard fabric production | Double: Side-by-side double length
+                    {t('machines.typeDescription')}
                   </p>
                 </div>
 
                 <div>
                   <label htmlFor="description" className="label">
-                    Description
+                    {t('machines.description')}
                   </label>
                   <textarea
                     id="description"
                     rows="4"
                     className="input"
-                    placeholder="Add any notes or details about this machine..."
+                    placeholder={t('machines.description')}
                     value={formData.description}
                     onChange={(e) =>
                       setFormData({ ...formData, description: e.target.value })
@@ -351,10 +354,10 @@ export default function Machines() {
 
                 <div className="flex gap-3 pt-4">
                   <button type="button" onClick={closeModal} className="btn-secondary flex-1">
-                    Cancel
+                    {t('common.cancel')}
                   </button>
                   <button type="submit" className="btn-primary flex-1">
-                    {editingMachine ? 'Update' : 'Add'} Machine
+                    {editingMachine ? t('common.update') : t('common.add')} {t('machines.title')}
                   </button>
                 </div>
               </form>

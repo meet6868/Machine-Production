@@ -2,9 +2,12 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { FiHome, FiSettings, FiUsers, FiBarChart2, FiLogOut, FiMenu, FiX, FiImage, FiTable } from 'react-icons/fi';
 import { useState } from 'react';
+import LanguageSwitcher from './LanguageSwitcher';
+import { useTranslation } from 'react-i18next';
 
 export default function Layout() {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -15,10 +18,10 @@ export default function Layout() {
   };
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: FiHome },
-    { name: 'Machines', href: '/dashboard/machines', icon: FiSettings },
-    { name: 'Workers', href: '/dashboard/workers', icon: FiUsers },
-    { name: 'Production', href: '/dashboard/production', icon: FiBarChart2 },
+    { name: t('nav.dashboard'), href: '/dashboard', icon: FiHome },
+    { name: t('nav.machines'), href: '/dashboard/machines', icon: FiSettings },
+    { name: t('nav.workers'), href: '/dashboard/workers', icon: FiUsers },
+    { name: t('nav.production'), href: '/dashboard/production', icon: FiBarChart2 },
     { name: 'Screenshot Mapping', href: '/dashboard/screenshot-mapping', icon: FiImage },
     { name: 'Table Visualization', href: '/dashboard/table-visualization', icon: FiTable },
   ];
@@ -124,14 +127,21 @@ export default function Layout() {
 
       {/* Main content */}
       <div className="md:pl-64 flex flex-col flex-1">
-        <div className="sticky top-0 z-10 md:hidden pl-1 pt-1 sm:pl-3 sm:pt-3 bg-white shadow">
+        <div className="sticky top-0 z-10 md:hidden flex items-center justify-between pl-1 pt-1 pr-3 sm:pl-3 sm:pt-3 bg-white shadow">
           <button
             onClick={() => setSidebarOpen(true)}
             className="-ml-0.5 -mt-0.5 h-12 w-12 inline-flex items-center justify-center rounded-md text-secondary-500 hover:text-secondary-900"
           >
             <FiMenu className="h-6 w-6" />
           </button>
+          <LanguageSwitcher />
         </div>
+        
+        {/* Desktop header with language switcher */}
+        <div className="hidden md:flex items-center justify-end px-4 py-3 bg-white shadow-sm">
+          <LanguageSwitcher />
+        </div>
+        
         <main className="flex-1">
           <div className="py-6">
             <div className="w-full px-4 sm:px-6 md:px-8">
