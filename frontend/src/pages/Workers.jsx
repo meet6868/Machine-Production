@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { workerAPI } from '../utils/api';
 import { toast } from 'react-toastify';
 import { FiPlus, FiEdit, FiTrash2, FiX, FiUser } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 
 export default function Workers() {
+  const { t } = useTranslation();
   const [workers, setWorkers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -86,6 +88,7 @@ export default function Workers() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <p className="ml-3 text-secondary-600">{t('common.loading')}</p>
       </div>
     );
   }
@@ -94,19 +97,19 @@ export default function Workers() {
     <div>
       <div className="mb-8 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-secondary-900">Workers</h1>
-          <p className="text-secondary-600 mt-2">Manage your production workers</p>
+          <h1 className="text-3xl font-bold text-secondary-900">{t('workers.title')}</h1>
+          <p className="text-secondary-600 mt-2">{t('workers.subtitle')}</p>
         </div>
         <button onClick={() => openModal()} className="btn-primary flex items-center gap-2">
-          <FiPlus /> Add Worker
+          <FiPlus /> {t('workers.addWorker')}
         </button>
       </div>
 
       {workers.length === 0 ? (
         <div className="card text-center py-12">
-          <p className="text-secondary-600 mb-4">No workers added yet</p>
+          <p className="text-secondary-600 mb-4">{t('workers.noWorkers')}</p>
           <button onClick={() => openModal()} className="btn-primary">
-            Add Your First Worker
+            {t('workers.addFirstWorker')}
           </button>
         </div>
       ) : (
@@ -116,16 +119,16 @@ export default function Workers() {
               <thead className="bg-secondary-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-secondary-700 uppercase tracking-wider">
-                    Name
+                    {t('workers.name')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-secondary-700 uppercase tracking-wider">
-                    Aadhaar Number
+                    {t('workers.aadhaarNumber')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-secondary-700 uppercase tracking-wider">
-                    Phone
+                    {t('workers.phone')}
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-secondary-700 uppercase tracking-wider">
-                    Actions
+                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-700 uppercase tracking-wider">
+                    {t('common.actions')}
                   </th>
                 </tr>
               </thead>

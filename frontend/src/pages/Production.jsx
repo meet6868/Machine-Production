@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { productionAPI, machineAPI, workerAPI } from '../utils/api';
 import { toast } from 'react-toastify';
 import { FiSave, FiCalendar, FiRefreshCw, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 import ScreenshotUploader from '../components/ScreenshotUploader';
 
 export default function Production() {
+  const { t } = useTranslation();
   const [machines, setMachines] = useState([]);
   const [workers, setWorkers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -324,17 +326,17 @@ export default function Production() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-secondary-900">Production Entry</h1>
-          <p className="text-secondary-600 mt-1">Enter production data for all machines</p>
+          <h1 className="text-2xl font-bold text-secondary-900">{t('production.title')}</h1>
+          <p className="text-secondary-600 mt-1">{t('production.subtitle')}</p>
         </div>
         <div className="flex gap-3">
           <button onClick={loadPreviousData} className="btn btn-secondary flex items-center">
             <FiRefreshCw className="mr-2" />
-            Load Previous
+            {t('common.loading')}
           </button>
           <button onClick={handleSaveAll} disabled={saving} className="btn btn-primary flex items-center">
             <FiSave className="mr-2" />
-            {saving ? 'Saving...' : 'Save All Data'}
+            {saving ? t('common.loading') : t('common.save')}
           </button>
         </div>
       </div>
@@ -343,7 +345,7 @@ export default function Production() {
       <div className="card">
         <div className="flex items-center gap-3">
           <FiCalendar className="text-primary-600 text-xl" />
-          <label className="font-medium text-secondary-700">Production Date:</label>
+          <label className="font-medium text-secondary-700">{t('production.productionDate')}:</label>
           <input
             type="date"
             value={selectedDate}
@@ -357,26 +359,25 @@ export default function Production() {
       <div className="card bg-gradient-to-r from-yellow-50 to-orange-50 border-l-4 border-yellow-500">
         <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
           <span className="text-2xl">⚡</span>
-          Electricity Meter Reading (All Machines Combined)
+          {t('production.electricityReading')}
         </h3>
         <p className="text-sm text-gray-600 mb-4">
-          Enter the total electricity reading for all machines in the factory
+          {t('production.electricityData')}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="label">Previous Reading</label>
+            <label className="label">{t('production.previousReading')}</label>
             <input
               type="number"
               step="0.01"
               className="input bg-white"
               value={electricityData.previousReading}
               onChange={(e) => setElectricityData({ ...electricityData, previousReading: e.target.value })}
-              placeholder="Yesterday's reading"
+              placeholder={t('production.previousReading')}
             />
-            <p className="text-xs text-gray-500 mt-1">Auto-loaded from yesterday</p>
           </div>
           <div>
-            <label className="label">Current Reading</label>
+            <label className="label">{t('production.currentReading')}</label>
             <input
               type="number"
               step="0.01"
@@ -392,9 +393,8 @@ export default function Production() {
                   unitsConsumed: consumed
                 });
               }}
-              placeholder="Today's reading"
+              placeholder={t('production.currentReading')}
             />
-            <p className="text-xs text-gray-500 mt-1">Enter today's meter reading</p>
           </div>
           <div>
             <label className="label">Units Consumed</label>

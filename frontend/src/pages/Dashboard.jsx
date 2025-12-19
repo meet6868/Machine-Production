@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { productionAPI, machineAPI, workerAPI } from '../utils/api';
 import { FiSettings, FiUsers, FiTrendingUp, FiActivity, FiCalendar } from 'react-icons/fi';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 import {
   LineChart,
   Line,
@@ -21,6 +22,7 @@ import {
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const [machines, setMachines] = useState([]);
   const [workers, setWorkers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -145,8 +147,8 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-secondary-900">Dashboard</h1>
-        <p className="text-secondary-600 mt-2">Production analytics and visualizations</p>
+        <h1 className="text-3xl font-bold text-secondary-900">{t('dashboard.title')}</h1>
+        <p className="text-secondary-600 mt-2">{t('dashboard.subtitle')}</p>
       </div>
 
       {/* Date Range Filter */}
@@ -154,7 +156,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-2">
             <FiCalendar className="h-5 w-5 text-secondary-600" />
-            <span className="text-sm font-medium text-secondary-700">Analytics Period:</span>
+            <span className="text-sm font-medium text-secondary-700">{t('dashboard.dateRange')}:</span>
           </div>
           <div className="flex gap-2 flex-wrap">
             <button
@@ -165,7 +167,7 @@ export default function Dashboard() {
                   : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
               }`}
             >
-              Last 7 Days
+              {t('dashboard.last7Days')}
             </button>
             <button
               onClick={() => setDateRangeDays(30)}
@@ -175,7 +177,7 @@ export default function Dashboard() {
                   : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
               }`}
             >
-              Last Month
+              {t('dashboard.last30Days')}
             </button>
             <button
               onClick={() => setDateRangeDays(60)}
@@ -185,7 +187,7 @@ export default function Dashboard() {
                   : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
               }`}
             >
-              2 Months
+              {t('dashboard.last60Days')}
             </button>
             <button
               onClick={() => setDateRangeDays(120)}
@@ -195,7 +197,7 @@ export default function Dashboard() {
                   : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
               }`}
             >
-              4 Months
+              {t('dashboard.last120Days')}
             </button>
             <button
               onClick={() => setDateRangeDays(180)}
@@ -205,7 +207,7 @@ export default function Dashboard() {
                   : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
               }`}
             >
-              6 Months
+              {t('dashboard.last180Days')}
             </button>
             <button
               onClick={() => setDateRangeDays(365)}
@@ -215,7 +217,7 @@ export default function Dashboard() {
                   : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
               }`}
             >
-              1 Year
+              {t('dashboard.last365Days')}
             </button>
           </div>
         </div>
@@ -226,7 +228,7 @@ export default function Dashboard() {
         <div className="card bg-gradient-to-br from-primary-500 to-primary-600 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-primary-100 text-sm font-medium">Total Machines</p>
+              <p className="text-primary-100 text-sm font-medium">{t('dashboard.activeMachines')}</p>
               <p className="text-3xl font-bold mt-2">{machines.length}</p>
             </div>
             <FiSettings className="h-12 w-12 text-primary-200" />
@@ -236,7 +238,7 @@ export default function Dashboard() {
         <div className="card bg-gradient-to-br from-success-500 to-success-600 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-success-100 text-sm font-medium">Total Workers</p>
+              <p className="text-success-100 text-sm font-medium">{t('dashboard.activeWorkers')}</p>
               <p className="text-3xl font-bold mt-2">{workers.length}</p>
             </div>
             <FiUsers className="h-12 w-12 text-success-200" />
@@ -246,9 +248,9 @@ export default function Dashboard() {
         <div className="card bg-gradient-to-br from-warning-500 to-warning-600 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-warning-100 text-sm font-medium">Today's Total Meter</p>
+              <p className="text-warning-100 text-sm font-medium">{t('dashboard.totalProduction')}</p>
               <p className="text-3xl font-bold mt-2">
-                {dailySummary?.total?.totalMeter?.toFixed(0) || 0}
+                {dailySummary?.total?.totalMeter?.toFixed(0) || 0} {t('dashboard.meters')}
               </p>
             </div>
             <FiTrendingUp className="h-12 w-12 text-warning-200" />
@@ -258,7 +260,7 @@ export default function Dashboard() {
         <div className="card bg-gradient-to-br from-purple-500 to-purple-600 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-purple-100 text-sm font-medium">Today's Avg Efficiency</p>
+              <p className="text-purple-100 text-sm font-medium">{t('dashboard.avgEfficiency')}</p>
               <p className="text-3xl font-bold mt-2">
                 {dailySummary?.total?.avgEfficiency?.toFixed(1) || 0}%
               </p>
@@ -271,7 +273,7 @@ export default function Dashboard() {
       {/* Daily Summary Section */}
       <div className="card">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-secondary-900">Daily Production Summary</h2>
+          <h2 className="text-xl font-semibold text-secondary-900">{t('reports.dailySummary')}</h2>
           <div className="flex items-center gap-3">
             <FiCalendar className="text-primary-600" />
             <input
