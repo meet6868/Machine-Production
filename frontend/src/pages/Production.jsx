@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { productionAPI, machineAPI, workerAPI } from '../utils/api';
 import { toast } from 'react-toastify';
-import { FiSave, FiCalendar, FiRefreshCw, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { FiSave, FiCalendar, FiRefreshCw, FiChevronDown, FiChevronUp, FiCheck, FiClock } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import ScreenshotUploader from '../components/ScreenshotUploader';
 
@@ -15,6 +15,10 @@ export default function Production() {
   const [productionData, setProductionData] = useState({});
   const [summary, setSummary] = useState(null);
   const [expandedMachine, setExpandedMachine] = useState(null);
+  const [lastSaved, setLastSaved] = useState(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const autoSaveTimerRef = useRef(null);
+  const dataChangedRef = useRef(false);
   
   // Global electricity data (for all machines combined)
   const [electricityData, setElectricityData] = useState({
@@ -32,6 +36,72 @@ export default function Production() {
       loadProductionData();
     }
   }, [selectedDate, machines]);
+
+  // Auto-save functionality - saves every 30 seconds
+  useEffect(() => {
+    // Clear existing timer
+    if (autoSaveTimerRef.current) {
+      clearInterval(autoSaveTimerRef.current);
+    }
+
+    // Set up auto-save timer
+    autoSaveTimerRef.current = setInterval(() => {
+      if (dataChangedRef.current && !saving) {
+        autoSaveData();
+      }
+    }, 30000); // 30 seconds
+
+    // Cleanup on unmount
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearInterval(autoSaveTimerRef.current);
+      }
+    };
+  }, [productionData, electricityData, selectedDate, machines, saving]);
+
+  // Save to localStorage whenever data changes (as backup)
+  useEffect(() => {
+    if (Object.keys(productionData).length > 0) {
+      const backupData = {
+        date: selectedDate,
+        productionData,
+        electricityData,
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem('production_backup', JSON.stringify(backupData));
+      dataChangedRef.current = true;
+      setHasUnsavedChanges(true);
+    }
+  }, [productionData, electricityData, selectedDate]);
+
+  // Restore from localStorage if available
+  useEffect(() => {
+    const backup = localStorage.getItem('production_backup');
+    if (backup) {
+      try {
+        const { date, productionData: savedData, electricityData: savedElectricity, timestamp } = JSON.parse(backup);
+        
+        // Only restore if it's for today or recent (within 2 days)
+        const backupDate = new Date(timestamp);
+        const now = new Date();
+        const daysDiff = Math.floor((now - backupDate) / (1000 * 60 * 60 * 24));
+        
+        if (daysDiff <= 2 && date === selectedDate && Object.keys(savedData).length > 0) {
+          const shouldRestore = window.confirm(
+            `Found unsaved data from ${new Date(timestamp).toLocaleString()}. Do you want to restore it?`
+          );
+          
+          if (shouldRestore) {
+            setProductionData(savedData);
+            setElectricityData(savedElectricity);
+            toast.info('Restored previous session data');
+          }
+        }
+      } catch (error) {
+        console.error('Error restoring backup:', error);
+      }
+    }
+  }, []);
 
   const fetchMachinesAndWorkers = async () => {
     try {
@@ -211,6 +281,81 @@ export default function Production() {
     toast.success('Screenshot data applied successfully!');
   };
 
+  // Auto-save function (silent save in background)
+  const autoSaveData = async () => {
+    try {
+      const promises = [];
+      let isFirstSave = true;
+      
+      machines.forEach(machine => {
+        const data = productionData[machine._id];
+        if (!data) return;
+
+        // Save day shift if worker is assigned
+        if (data.day.worker) {
+          promises.push(
+            productionAPI.create({
+              machine: machine._id,
+              worker: data.day.worker,
+              productionDate: selectedDate,
+              shift: 'day',
+              runtime: parseInt(data.day.runtime) || 0,
+              efficiency: parseFloat(data.day.efficiency) || 0,
+              h1: parseFloat(data.day.h1) || 0,
+              h2: parseFloat(data.day.h2) || 0,
+              worph: parseFloat(data.day.worph) || 0,
+              meter: parseFloat(data.day.meter) || 0,
+              totalPick: parseFloat(data.day.totalPick) || 0,
+              speed: parseFloat(data.speed) || 0,
+              cfm: parseFloat(data.cfm) || 0,
+              pik: parseFloat(data.pik) || 0,
+              ...(isFirstSave && {
+                previousReading: electricityData.previousReading !== '' ? parseFloat(electricityData.previousReading) : undefined,
+                currentReading: electricityData.currentReading !== '' ? parseFloat(electricityData.currentReading) : undefined,
+              }),
+              notes: data.day.notes
+            }).catch(err => console.error('Auto-save error (day):', err))
+          );
+          isFirstSave = false;
+        }
+
+        // Save night shift if worker is assigned
+        if (data.night.worker) {
+          promises.push(
+            productionAPI.create({
+              machine: machine._id,
+              worker: data.night.worker,
+              productionDate: selectedDate,
+              shift: 'night',
+              runtime: parseInt(data.night.runtime) || 0,
+              efficiency: parseFloat(data.night.efficiency) || 0,
+              h1: parseFloat(data.night.h1) || 0,
+              h2: parseFloat(data.night.h2) || 0,
+              worph: parseFloat(data.night.worph) || 0,
+              meter: parseFloat(data.night.meter) || 0,
+              totalPick: parseFloat(data.night.totalPick) || 0,
+              speed: parseFloat(data.speed) || 0,
+              cfm: parseFloat(data.cfm) || 0,
+              pik: parseFloat(data.pik) || 0,
+              notes: data.night.notes
+            }).catch(err => console.error('Auto-save error (night):', err))
+          );
+        }
+      });
+
+      if (promises.length > 0) {
+        await Promise.allSettled(promises);
+        setLastSaved(new Date());
+        setHasUnsavedChanges(false);
+        dataChangedRef.current = false;
+        // Clear localStorage backup after successful save
+        localStorage.removeItem('production_backup');
+      }
+    } catch (error) {
+      console.error('Auto-save failed:', error);
+    }
+  };
+
   const handleSaveAll = async () => {
     try {
       setSaving(true);
@@ -276,6 +421,10 @@ export default function Production() {
 
       await Promise.all(promises);
       toast.success('Production data saved successfully!');
+      setLastSaved(new Date());
+      setHasUnsavedChanges(false);
+      dataChangedRef.current = false;
+      localStorage.removeItem('production_backup');
       loadProductionData();
     } catch (error) {
       console.error('Error saving production data:', error);
@@ -328,15 +477,29 @@ export default function Production() {
         <div>
           <h1 className="text-2xl font-bold text-secondary-900">{t('production.title')}</h1>
           <p className="text-secondary-600 mt-1">{t('production.subtitle')}</p>
+          
+          {/* Auto-save status indicator */}
+          {lastSaved && (
+            <div className="flex items-center gap-2 mt-2 text-xs text-success-600">
+              <FiCheck className="h-4 w-4" />
+              <span>Auto-saved at {lastSaved.toLocaleTimeString()}</span>
+            </div>
+          )}
+          {hasUnsavedChanges && !lastSaved && (
+            <div className="flex items-center gap-2 mt-2 text-xs text-warning-600">
+              <FiClock className="h-4 w-4 animate-pulse" />
+              <span>Unsaved changes - will auto-save in 30s</span>
+            </div>
+          )}
         </div>
         <div className="flex gap-3">
           <button onClick={loadPreviousData} className="btn btn-secondary flex items-center">
             <FiRefreshCw className="mr-2" />
-            {t('common.loading')}
+            Load Previous
           </button>
           <button onClick={handleSaveAll} disabled={saving} className="btn btn-primary flex items-center">
             <FiSave className="mr-2" />
-            {saving ? t('common.loading') : t('common.save')}
+            {saving ? 'Saving...' : 'Save Now'}
           </button>
         </div>
       </div>
